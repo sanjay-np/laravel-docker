@@ -7,7 +7,7 @@ A lightweight, Docker-based development environment for Laravel, featuring Nginx
 | Service | Container Name | Description | Ports |
 | :--- | :--- | :--- | :--- |
 | **Nginx** | `laravel_nginx` | Web server | `8080:80` |
-| **App** | `laravel_app` | PHP 8.4 FPM, Composer, Bun | `5173:5173` (Vite) |
+| **App** | `laravel_app` | PHP 8.4 FPM, Composer, Bun, Bunx | `5173:5173` (Vite) |
 | **Database** | `laravel_db` | MySQL 8.4 | - |
 
 ## Prerequisites
@@ -73,10 +73,11 @@ docker compose exec app composer install
 docker compose exec app php artisan migrate
 ```
 
-**Bun / NPM**
+**Bun / Bunx / NPM**
 ```bash
 docker compose exec app bun install
 docker compose exec app bun run dev
+docker compose exec app bunx <package>  # Run packages without installing
 ```
 
 **Shell Access**
@@ -84,8 +85,22 @@ docker compose exec app bun run dev
 docker compose exec app bash
 ```
 
+## Configuration
+
+### PHP Configuration
+The environment includes custom PHP configuration with the following limits:
+- **Upload Max Filesize**: 50M
+- **Post Max Size**: 50M  
+- **Memory Limit**: 256M
+- **Max Execution Time**: 300 seconds
+
+### Nginx Configuration
+- **Maximum Upload Size**: 50M
+- **Document Root**: `/var/www/public`
+
 ## Project Structure
 
-- `docker/`: Docker configuration files (PHP, Nginx).
+- `docker/`: Docker configuration files (PHP, Nginx, custom PHP ini).
 - `src/`: Your Laravel application code (mapped to `/var/www`).
 - `docker-compose.yml`: Service definitions.
+- `.env`: Environment variables for database credentials and PHP version.
