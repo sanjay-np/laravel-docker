@@ -11,7 +11,8 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # --- ADD BUN INSTALLATION HERE ---
 RUN curl -fsSL https://bun.sh/install | bash \
-    && mv /root/.bun/bin/bun /usr/local/bin/bun
+    && mv /root/.bun/bin/bun /usr/local/bin/bun \
+    && ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -19,6 +20,16 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Create a system user to match Arch Linux UID (usually 1000)
 ARG USER_ID=1000
 RUN useradd -u ${USER_ID} -m -s /bin/bash laravel
+
+# Set PATH for all users to include bun
+ENV PATH="/usr/local/bin:$PATH"
+
+# Copy custom PHP configuration
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+# Create bunx symlink before switching users
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
+
 USER laravel
 
 WORKDIR /var/www
