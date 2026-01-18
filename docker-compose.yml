@@ -24,12 +24,31 @@ services:
     networks:
       - laravel
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: laravel_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db # Use 'db' for Docker MySQL, or IP for external
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1 # Allows connecting to any server from login page
+      UPLOAD_LIMIT: 1G
+    depends_on:
+      - db
+    networks:
+      - laravel
+
   db:
     image: mysql:8.4
     container_name: laravel_db
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
