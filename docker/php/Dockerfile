@@ -32,4 +32,10 @@ RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 USER laravel
 
+# Install Laravel Installer
+RUN composer global require laravel/installer
+
+# Add PHP Composer global bin to PATH
+ENV PATH="/home/laravel/.composer/vendor/bin:${PATH}"
+
 WORKDIR /var/www

@@ -7,7 +7,7 @@ A lightweight, Docker-based development environment for Laravel, featuring Nginx
 | Service | Container Name | Description | Ports |
 | :--- | :--- | :--- | :--- |
 | **Nginx** | `laravel_nginx` | Web server | `8080:80` |
-| **App** | `laravel_app` | PHP 8.4 FPM, Composer, Bun, Bunx | `5173:5173` (Vite) |
+| **App** | `laravel_app` | PHP 8.4 FPM, Composer, Laravel Installer, Bun, Bunx | `5173:5173` (Vite) |
 | **Database** | `laravel_db` | MySQL 8.4 | `3306:3306` |
 | **phpMyAdmin** | `laravel_phpmyadmin` | Database management UI | `8081:80` |
 
@@ -92,9 +92,30 @@ DB_PASSWORD=secret
 
 > **Note:** phpMyAdmin supports connecting to any MySQL server. Set `PMA_ARBITRARY=1` to enable this feature.
 
-### Common Commands
+### Helper Scripts
 
-Run commands inside the `app` container:
+For convenience, helper scripts are provided in the project root to run commands inside the container without typing `docker compose exec app ...` every time.
+
+**Laravel Installer**
+```bash
+./laravel new my-app
+```
+
+**Artisan**
+```bash
+./artisan migrate
+./artisan make:controller MyController
+```
+
+**Composer**
+```bash
+./composer install
+./composer require laravel/breeze
+```
+
+### Traditional Commands
+
+Alternatively, you can run commands directly using `docker compose`:
 
 **Composer**
 ```bash
@@ -190,6 +211,9 @@ laravel-docker/
 ├── src/                     # Laravel application (mapped to /var/www)
 ├── docker-compose.yml       # Service definitions
 ├── .env                     # Docker environment variables
+├── artisan                  # Helper script for artisan commands
+├── composer                 # Helper script for composer commands
+├── laravel                  # Helper script for laravel installer commands
 └── README.md
 ```
 
