@@ -6,8 +6,9 @@ A lightweight, Docker-based development environment for Laravel, featuring Nginx
 
 | Service | Container Name | Description | Ports |
 | :--- | :--- | :--- | :--- |
-| **Nginx** | `laravel_nginx` | Web server | `8080:80` |
-| **App** | `laravel_app` | PHP 8.4 FPM, Composer, Laravel Installer, Bun, Bunx | `5173:5173` (Vite) |
+| **Nginx** | `laravel_nginx` | Web server | `80:80` |
+| **App** | `laravel_app` | PHP 8.4, Supervisor, Cron, Laravel Installer | `5173:5173` |
+| **Redis** | `laravel_redis` | Key-value store (Cache/Queue) | `6379:6379` |
 | **Database** | `laravel_db` | MySQL 8.4 | `3306:3306` |
 | **phpMyAdmin** | `laravel_phpmyadmin` | Database management UI | `8081:80` |
 
@@ -94,24 +95,79 @@ DB_PASSWORD=secret
 
 ### Helper Scripts
 
-For convenience, helper scripts are provided in the project root to run commands inside the container without typing `docker compose exec app ...` every time.
+Helper scripts are project-aware. If the first argument is a directory in `src/`, the command will run inside that folder.
 
-**Laravel Installer**
+**Create Multiple Projects**
 ```bash
-./laravel new my-app
+./laravel new app1
+./laravel new app2
 ```
 
-**Artisan**
+**Run Artisan in Specific Project**
 ```bash
-./artisan migrate
-./artisan make:controller MyController
+./artisan app1 migrate
+./artisan app2 make:controller UserOps
 ```
 
-**Composer**
+**Run Composer in Specific Project**
 ```bash
-./composer install
-./composer require laravel/breeze
+./composer app1 install
+./composer app2 require laravel/breeze
 ```
+
+### Multiple Databases
+
+To create multiple databases on startup:
+
+1.  Open `.env` in the project root.
+2.  Add your database names to `MYSQL_ADDITIONAL_DATABASES`:
+    ```env
+    MYSQL_ADDITIONAL_DATABASES=app2_db,app3_db
+    ```
+3.  Restart Docker containers:
+    ```bash
+    docker compose down && docker compose up -d
+    ```
+
+### Accessing Multiple Projects
+
+Since we are now using port 80, you no longer need to specify `:8080`.
+
+| Project Folder | URL |
+| :--- | :--- |
+| `src/app1` | [http://app1.localhost](http://app1.localhost) |
+| `src/app2` | [http://app2.localhost](http://app2.localhost) |
+| `src/` (root) | [http://localhost](http://localhost) |
+
+### Server Features
+
+#### 1. Background Jobs (Queue Workers)
+Supervisor is installed and running inside the `app` container. It **automatically detects** Laravel projects in subdirectories and creates a worker for each one.
+
+- **Auto-Discovery**: On container startup, the entrypoint script scans `src/` for projects containing an `artisan` file.
+- **Worker Config**: It generates a Supervisor config file for each found project (e.g., `app1-worker.conf`).
+- **Logs**: Worker logs are stored in `src/<project-name>/storage/logs/worker.log`.
+- **Applying Changes**: If you **add or remove** a project, **you must restart the container** for the configuration to update.
+  - **Adding**: Registers the new worker.
+  - **Removing**: Stops and creates a clean slate, removing the worker for the deleted project.
+  ```bash
+  docker compose restart app
+  # or
+  docker compose down && docker compose up -d
+  ```
+
+#### 2. Caching & Sessions (Redis)
+Redis is available at host `redis` (inside Docker) or `localhost:6379` (outside).
+To use it in Laravel, update your project's `.env`:
+```env
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+REDIS_HOST=redis
+```
+
+#### 3. Task Scheduling (Cron)
+Cron is running inside the container and is pre-configured to run the Laravel Scheduler every minute.
 
 ### Traditional Commands
 

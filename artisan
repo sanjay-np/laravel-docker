@@ -7,4 +7,11 @@ if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
     exit 1
 fi
 
-docker-compose exec -u laravel app php artisan "$@"
+# If the first argument is a directory in /var/www, assume we want to run artisan there
+if [ -d "src/$1" ] && [ -f "src/$1/artisan" ]; then
+    PROJECT=$1
+    shift
+    docker-compose exec -u laravel app bash -c "cd $PROJECT && php artisan \"$@\""
+else
+    docker-compose exec -u laravel app php artisan "$@"
+fi
