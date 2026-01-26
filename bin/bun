@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Check if the app container is running
+if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
+    echo "Error: laravel_app container is not running."
+    echo "Please start the containers with: docker compose up -d"
+    exit 1
+fi
+
+# If the first argument is a directory in src/, assume we want to run bun there
+if [ -d "../src/$1" ]; then
+    PROJECT=$1
+    shift
+    docker compose exec -u laravel app bash -c "cd $PROJECT && bun \"$@\""
+else
+    # If using 'run dev', we might need to be careful about not exiting immediately if it's detached, 
+    # but exec attaches strictly.
+    docker compose exec -u laravel app bun "$@"
+fi

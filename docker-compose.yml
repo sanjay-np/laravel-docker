@@ -7,7 +7,7 @@ services:
     volumes:
       - ./src:/var/www
     ports:
-      - "5173:5173" # For Vite (Hot Module Replacement)
+      - "5173-5178:5173-5178" # For Vite (Hot Module Replacement)
     networks:
       - laravel
 

@@ -1,304 +1,224 @@
 # Laravel Docker Environment
 
-A lightweight, Docker-based development environment for Laravel, featuring Nginx, PHP 8.4, MySQL 8.4, and phpMyAdmin.
+A robust, lightweight Docker-based development environment for Laravel on Linux.  
+Includes **Nginx**, **PHP 8.4** (via FPM), **MySQL 8.4**, **Redis**, and **phpMyAdmin**.
 
-## Services
+---
 
-| Service | Container Name | Description | Ports |
-| :--- | :--- | :--- | :--- |
-| **Nginx** | `laravel_nginx` | Web server | `80:80` |
-| **App** | `laravel_app` | PHP 8.4, Supervisor, Cron, Laravel Installer | `5173:5173` |
-| **Redis** | `laravel_redis` | Key-value store (Cache/Queue) | `6379:6379` |
-| **Database** | `laravel_db` | MySQL 8.4 | `3306:3306` |
-| **phpMyAdmin** | `laravel_phpmyadmin` | Database management UI | `8081:80` |
+## ⚡ Quick Start
 
-## Prerequisites
+### 1. Setup
+Clone the repo and start the services.
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-
-## Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd laravel-docker
-   ```
-
-2. **Configure Environment Variables**
-   Create or update the `.env` file in the root directory:
-   ```bash
-   # .env
-   DOCKER_PHP_VERSION=8.4
-
-   # Database Configuration
-   DB_HOST=db
-   DB_PORT=3306
-   DB_DATABASE=laravel
-   DB_USERNAME=laravel
-   DB_PASSWORD=secret
-   ```
-
-3. **Start the containers**
-   ```bash
-   docker compose up -d --build
-   ```
-
-## Setting up Laravel
-
-The `src/` directory is mapped to `/var/www` inside the container.
-
-### Option A: New Laravel Project
-If `src/` is empty, you can install a fresh Laravel application:
 ```bash
-# Delete the placeholder file if exists
-rm src/index.php
+# Clone
+git clone <repository-url>
+cd laravel-docker
 
-# Install Laravel
-docker compose exec app composer create-project laravel/laravel .
+# Configure Base Environment
+cp .env.example .env 2>/dev/null || : # Ensure .env exists
+
+# Start Containers
+docker compose up -d --build
 ```
 
-### Option B: Existing Project
-Move your existing Laravel project files into the `src/` directory.
+### 2. Create a Laravel Project
+The `src/` directory is mapped to the container's `/var/www`. You can install a new project directly or move an existing one.
 
-### Configure Laravel's Database Connection
-Update `src/.env` with:
-```env
+**Option A: New Project**
+```bash
+bin/laravel new my-app
+```
+_This creates a new Laravel app in `src/my-app`._
+
+**Option B: Existing Project**
+Move your project folder to `src/my-app`.
+
+### 3. Access the Application
+
+| Project Location | URL | Notes |
+| :--- | :--- | :--- |
+| `src/app1` | [http://app1.localhost](http://app1.localhost) | Access via subdomain |
+| `src/` (root) | [http://localhost](http://localhost) | Access via root domain |
+
+---
+
+## 🛠 Helper Scripts
+
+We provide wrapper scripts so you don't have to type `docker compose exec ...` every time.
+These scripts are **context-aware**: if you point them to a specific project folder, they run inside that folder.
+
+| Command | Usage Example | Description |
+| :--- | :--- | :--- |
+| `bin/artisan` | `bin/artisan app1 migrate` | Run Artisan commands |
+| `bin/composer` | `bin/composer app1 require laravel/breeze` | Run Composer commands |
+| `bin/bun` | `bin/bun app1 run dev` | Run Bun/NPM commands |
+| `bin/laravel` | `bin/laravel new app2` | Laravel Installer |
+
+---
+
+## � Command Examples
+
+Here are some common tasks you might need to perform.
+
+### Artisan
+Run any artisan command inside a project.
+
+```bash
+# General
+bin/artisan app1 about
+bin/artisan app1 list
+
+# Migration
+bin/artisan app1 migrate
+bin/artisan app1 migrate:fresh --seed
+
+# Make Commands
+bin/artisan app1 make:controller UserController
+bin/artisan app1 make:model Product -m
+bin/artisan app1 make:test UserTest
+
+# Cache Clearing
+bin/artisan app1 optimize:clear
+```
+
+### Composer
+Manage PHP dependencies.
+
+```bash
+# Install Dependencies
+bin/composer app1 install
+
+# Require a Package
+bin/composer app1 require laravel/breeze --dev
+bin/composer app1 require spatie/laravel-permission
+
+# Autoload
+bin/composer app1 dump-autoload
+```
+
+### Bun / Frontend
+Manage frontend assets and run development servers.
+
+```bash
+# Install Node Dependencies
+bin/bun app1 install
+
+# Start Dev Server (Vite)
+bin/bun app1 run dev
+
+# Build for Production
+bin/bun app1 run build
+
+# Run specific command (e.g. running jest)
+bin/bun app1 run test
+```
+
+### Testing
+Run your test suite.
+```bash
+bin/artisan app1 test
+```
+
+---
+
+## �📦 Services & Ports
+
+| Service | Container Name | Description | Host Port | Internal Port |
+| :--- | :--- | :--- | :--- | :--- |
+| **Nginx** | `laravel_nginx` | Web Server | `80` | `80` |
+| **MySQL** | `laravel_db` | Database | `3306` | `3306` |
+| **Redis** | `laravel_redis` | Cache / Queue | `6379` | `6379` |
+| **phpMyAdmin**| `laravel_phpmyadmin` | DB GUI | `8081` | `80` |
+| **Vite** | `laravel_app` | Frontend Dev | `5173-5178`| `5173-5178` |
+
+> **Note**: Vite ports (5173-5178) are open to allow multiple projects to run `bun run dev` simultaneously.
+
+---
+
+## ⚙️ Configuration
+
+### Database Connection (Laravel)
+Configure your Laravel project's `.env` file to connect to the internal Docker services.
+
+```ini
 DB_CONNECTION=mysql
-DB_HOST=db
+DB_HOST=db             # Service name in docker-compose
 DB_PORT=3306
 DB_DATABASE=laravel
 DB_USERNAME=laravel
 DB_PASSWORD=secret
-```
 
-## Usage
-
-### Accessing the Application
-
-| Service | URL | Description |
-| :--- | :--- | :--- |
-| **Web App** | [http://localhost:8080](http://localhost:8080) | Main Laravel application |
-| **phpMyAdmin** | [http://localhost:8081](http://localhost:8081) | Database management |
-| **Vite HMR** | [http://localhost:5173](http://localhost:5173) | Hot Module Replacement |
-| **MySQL** | `localhost:3306` | Database (from host machine) |
-
-### phpMyAdmin Login
-
-| Field | Value |
-| :--- | :--- |
-| Server | `db` (pre-filled) |
-| Username | `root` or `laravel` |
-| Password | `secret` |
-
-> **Note:** phpMyAdmin supports connecting to any MySQL server. Set `PMA_ARBITRARY=1` to enable this feature.
-
-### Helper Scripts
-
-Helper scripts are project-aware. If the first argument is a directory in `src/`, the command will run inside that folder.
-
-**Create Multiple Projects**
-```bash
-./laravel new app1
-./laravel new app2
-```
-
-**Run Artisan in Specific Project**
-```bash
-./artisan app1 migrate
-./artisan app2 make:controller UserOps
-```
-
-**Run Composer in Specific Project**
-```bash
-./composer app1 install
-./composer app2 require laravel/breeze
+CACHE_STORE=redis
+REDIS_HOST=redis       # Service name in docker-compose
 ```
 
 ### Multiple Databases
-
-To create multiple databases on startup:
-
-1.  Open `.env` in the project root.
-2.  Add your database names to `MYSQL_ADDITIONAL_DATABASES`:
-    ```env
-    MYSQL_ADDITIONAL_DATABASES=app2_db,app3_db
-    ```
-3.  Restart Docker containers:
-    ```bash
-    docker compose down && docker compose up -d
-    ```
-
-### Accessing Multiple Projects
-
-Since we are now using port 80, you no longer need to specify `:8080`.
-
-| Project Folder | URL |
-| :--- | :--- |
-| `src/app1` | [http://app1.localhost](http://app1.localhost) |
-| `src/app2` | [http://app2.localhost](http://app2.localhost) |
-| `src/` (root) | [http://localhost](http://localhost) |
-
-### Server Features
-
-#### 1. Background Jobs (Queue Workers)
-Supervisor is installed and running inside the `app` container. It **automatically detects** Laravel projects in subdirectories and creates a worker for each one.
-
-- **Auto-Discovery**: On container startup, the entrypoint script scans `src/` for projects containing an `artisan` file.
-- **Worker Config**: It generates a Supervisor config file for each found project (e.g., `app1-worker.conf`).
-- **Logs**: Worker logs are stored in `src/<project-name>/storage/logs/worker.log`.
-- **Applying Changes**: If you **add or remove** a project, **you must restart the container** for the configuration to update.
-  - **Adding**: Registers the new worker.
-  - **Removing**: Stops and creates a clean slate, removing the worker for the deleted project.
-  ```bash
-  docker compose restart app
-  # or
-  docker compose down && docker compose up -d
-  ```
-
-#### 2. Caching & Sessions (Redis)
-Redis is available at host `redis` (inside Docker) or `localhost:6379` (outside).
-To use it in Laravel, update your project's `.env`:
-```env
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
-SESSION_DRIVER=redis
-REDIS_HOST=redis
+To create extra databases on container startup, add them to the root `.env`:
+```ini
+MYSQL_ADDITIONAL_DATABASES=app1_db,app2_db
 ```
+_Then restart the containers: `docker compose down && docker compose up -d`_
 
-#### 3. Task Scheduling (Cron)
-Cron is running inside the container and is pre-configured to run the Laravel Scheduler every minute.
+### Queue Workers (Supervisor)
+Supervisor runs inside the container and **automatically detects** Laravel projects in `src/`.
+- It scans `src/` for folders containing `artisan`.
+- Automatically creates workers (`php artisan queue:work`).
+- Logs are located at `src/<project>/storage/logs/worker.log`.
 
-### Traditional Commands
-
-Alternatively, you can run commands directly using `docker compose`:
-
-**Composer**
+**To register new workers after adding a project:**
 ```bash
-docker compose exec app composer install
+docker compose restart app
 ```
 
-**Artisan**
-```bash
-docker compose exec app php artisan migrate
-docker compose exec app php artisan optimize:clear
-```
+### Vite Configuration
+Update `vite.config.js` in your Laravel project to work with Docker.
 
-**Bun / Bunx / NPM**
-```bash
-docker compose exec app bun install
-docker compose exec app bun run dev
-docker compose exec app bunx <package>  # Run packages without installing
-```
-
-**Shell Access**
-```bash
-docker compose exec app bash
-```
-
-## Connecting to External Database
-
-To connect to a MySQL database on another machine (e.g., another PC on your network):
-
-1. **Update `src/.env`**:
-   ```env
-   DB_HOST=192.168.1.xxx    # IP of the other PC
-   DB_PORT=3306
-   DB_DATABASE=your_database
-   DB_USERNAME=your_username
-   DB_PASSWORD=your_password
-   ```
-
-2. **Ensure the external MySQL allows remote connections**:
-   - Edit MySQL config: `bind-address = 0.0.0.0`
-   - Create a user with remote access:
-     ```sql
-     CREATE USER 'username'@'%' IDENTIFIED BY 'password';
-     GRANT ALL PRIVILEGES ON database.* TO 'username'@'%';
-     FLUSH PRIVILEGES;
-     ```
-   - Open firewall port 3306
-
-3. **Update phpMyAdmin** (optional):
-   In `docker-compose.yml`, change `PMA_HOST`:
-   ```yaml
-   environment:
-     PMA_HOST: 192.168.1.xxx
-   ```
-
-## Configuration
-
-### PHP Configuration
-The environment includes custom PHP configuration with the following limits:
-- **Upload Max Filesize**: 50M
-- **Post Max Size**: 50M  
-- **Memory Limit**: 256M
-- **Max Execution Time**: 300 seconds
-
-### Nginx Configuration
-- **Maximum Upload Size**: 50M
-- **Document Root**: `/var/www/public`
-
-### phpMyAdmin Configuration
-- **Upload Limit**: 1G (for importing large SQL files)
-- **Arbitrary Server Connection**: Enabled
-
-## Vite Configuration (for Docker)
-
-If using Vite for frontend development, update `vite.config.js`:
 ```javascript
-server: {
-    host: "0.0.0.0",        // Listen on all interfaces
-    hmr: {
-        host: "localhost",  // Browser connects via localhost
+export default defineConfig({
+    server: {
+        host: '0.0.0.0',
+        hmr: {
+            host: 'localhost',
+        },
     },
-},
+    // ...
+});
 ```
 
-## Project Structure
+---
+
+## 📂 Project Structure
 
 ```
 laravel-docker/
-├── docker/
-│   ├── nginx/
-│   │   └── default.conf     # Nginx configuration
-│   └── php/
-│       └── Dockerfile       # PHP 8.4 image build
-├── src/                     # Laravel application (mapped to /var/www)
-├── docker-compose.yml       # Service definitions
-├── .env                     # Docker environment variables
-├── artisan                  # Helper script for artisan commands
-├── composer                 # Helper script for composer commands
-├── laravel                  # Helper script for laravel installer commands
-└── README.md
+├── .env                     # Docker Environment Variables
+├── docker-compose.yml       # Service Config
+├── docker/                  # Dockerfiles & Configs
+│   ├── nginx/               # Nginx Sites
+│   └── php/                 # PHP, Supervisor, Cron
+├── src/                     # YOUR PROJECTS GO HERE (Mapped to /var/www)
+│   ├── app1/
+│   └── app2/
+├── bin/                     # Helper Scripts
+│   ├── artisan
+│   ├── bun
+│   ├── composer
+│   └── laravel
 ```
 
-## Troubleshooting
+---
 
-### Port Conflicts
-If you get "port already in use" errors:
+## ❓ Troubleshooting
+
+**Port Conflicts**
+If ports 80 or 3306 are in use, modify `docker-compose.yml` or stop local services (`sudo service apache2 stop`, `sudo service mysql stop`).
+
+**Permission Issues**
+If you cannot write to directories, ensure permissions are set correctly:
 ```bash
-# Check what's using a port
-lsof -i :3306
-
-# Use a different port in docker-compose.yml
-ports:
-  - "3310:3306"  # Use 3310 instead
+sudo chown -R $USER:$USER src/
 ```
 
-### "Page Expired" Error (CSRF Issues)
-If using an external database and getting CSRF errors:
-```env
-# In src/.env, use file-based sessions instead of database
-SESSION_DRIVER=file
-CACHE_STORE=file
-```
-
-### Clear All Caches
-```bash
-docker compose exec app php artisan optimize:clear
-```
-
-## License
-
-This project is open-sourced software.
+**Connecting to External DB**
+Set `DB_HOST` in your Laravel `.env` to your host machine's IP (e.g., `192.168.1.50`) and ensure your external MySQL binds to `0.0.0.0`.
