@@ -4,7 +4,7 @@ FROM php:${PHP_VERSION}-fpm
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev \
-    libpq-dev nodejs npm supervisor cron # Added supervisor and cron
+    nodejs npm supervisor cron # Added supervisor and cron
 
 # Install PHP extensions for Laravel
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
@@ -26,9 +26,6 @@ ENV PATH="/usr/local/bin:$PATH"
 
 # Copy custom PHP configuration
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
-
-# Create bunx symlink before switching users
-RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # Copy supervisor configuration
 COPY docker/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

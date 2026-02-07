@@ -52,7 +52,7 @@ services:
     container_name: laravel_db
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_USER: ${DB_USERNAME:-laravel}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ADDITIONAL_DATABASES: ${MYSQL_ADDITIONAL_DATABASES:-}

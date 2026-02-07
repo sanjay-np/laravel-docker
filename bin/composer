@@ -3,7 +3,7 @@
 # Check if the app container is running
 if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
     echo "Error: laravel_app container is not running."
-    echo "Please start the containers with: docker-compose up -d"
+    echo "Please start the containers with: docker compose up -d"
     exit 1
 fi
 
@@ -11,7 +11,7 @@ fi
 if [ -d "../src/$1" ]; then
     PROJECT=$1
     shift
-    docker-compose exec -u laravel app bash -c "cd $PROJECT && composer \"$@\""
+    docker compose exec -u laravel app bash -c "cd $PROJECT && composer \"$@\""
 else
-    docker-compose exec -u laravel app composer "$@"
+docker compose exec -u laravel app composer "$@"
 fi

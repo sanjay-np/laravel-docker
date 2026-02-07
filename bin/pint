@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Check if the app container is running
+if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
+    echo "Error: laravel_app container is not running."
+    echo "Please start the containers with: docker compose up -d"
+    exit 1
+fi
+
+# If the first argument is a directory in /var/www, assume we want to run pint there
+if [ -d "../src/$1" ] && [ -f "../src/$1/vendor/bin/pint" ]; then
+    PROJECT=$1
+    shift
+    docker compose exec -u laravel app bash -c "cd $PROJECT && vendor/bin/pint $*"
+else
+    docker compose exec -u laravel app vendor/bin/pint $@
+fi
