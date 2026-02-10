@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Check if the app container is running
 if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
     echo "Error: laravel_app container is not running."
@@ -7,8 +10,8 @@ if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
     exit 1
 fi
 
-# If the first argument is a directory in /var/www, assume we want to run artisan there
-if [ -d "../src/$1" ] && [ -f "../src/$1/artisan" ]; then
+# If the first argument is a directory in src/, assume we want to run artisan there
+if [ -d "$SCRIPT_DIR/../src/$1" ] && [ -f "$SCRIPT_DIR/../src/$1/artisan" ]; then
     PROJECT=$1
     shift
     docker compose exec -u laravel app bash -c "cd $PROJECT && php artisan $*"

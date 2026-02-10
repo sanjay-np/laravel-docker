@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if the app container is running
+if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
+    echo "Error: laravel_app container is not running."
+    echo "Please start the containers with: docker compose up -d"
+    exit 1
+fi
+
+# Function to fix permissions for a project
+fix_project_permissions() {
+    local project_path="$1"
+    local project_name=$(basename "$project_path")
+    
+    echo "Fixing permissions for: $project_name"
+    
+    docker compose exec app bash -c "
+        mkdir -p '$project_path/storage/logs'
+        mkdir -p '$project_path/storage/framework/views'
+        mkdir -p '$project_path/storage/framework/cache'
+        mkdir -p '$project_path/storage/framework/sessions'
+        mkdir -p '$project_path/bootstrap/cache'
+        chown -R laravel:laravel '$project_path/storage'
+        chown -R laravel:laravel '$project_path/bootstrap/cache'
+        chmod -R 775 '$project_path/storage'
+        chmod -R 775 '$project_path/bootstrap/cache'
+        echo 'Permissions fixed for $project_name'
+    "
+}
+
+# If a specific project is provided
+if [ -n "$1" ] && [ -d "$SCRIPT_DIR/../src/$1" ] && [ -f "$SCRIPT_DIR/../src/$1/artisan" ]; then
+    fix_project_permissions "/var/www/$1"
+else
+    # Fix permissions for all Laravel projects
+    echo "Scanning for Laravel projects..."
+    for project in "$SCRIPT_DIR"/../src/*; do
+        if [ -d "$project" ] && [ -f "$project/artisan" ]; then
+            project_name=$(basename "$project")
+            fix_project_permissions "/var/www/$project_name"
+        fi
+    done
+    echo "All permissions fixed!"
+fi

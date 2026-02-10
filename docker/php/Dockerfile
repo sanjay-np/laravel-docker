@@ -27,6 +27,9 @@ ENV PATH="/usr/local/bin:$PATH"
 # Copy custom PHP configuration
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
+# Copy PHP-FPM pool configuration to use laravel user
+COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
+
 # Copy supervisor configuration
 COPY docker/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 

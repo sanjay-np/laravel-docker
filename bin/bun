@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Check if the app container is running
 if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
     echo "Error: laravel_app container is not running."
@@ -8,7 +11,7 @@ if [ ! "$(docker ps -q -f name=laravel_app)" ]; then
 fi
 
 # If the first argument is a directory in src/, assume we want to run bun there
-if [ -d "../src/$1" ]; then
+if [ -d "$SCRIPT_DIR/../src/$1" ]; then
     PROJECT=$1
     shift
     docker compose exec -u laravel app bash -c "cd $PROJECT && bun \"$@\""
